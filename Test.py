@@ -4,11 +4,32 @@ import discord
 import asyncio
 import requests
 from random import choice as select
+from os.path import isfile
 
 token = ""
+commands = []
+admin_name = ""
+config = {}
 
-for line in open("token.conf"):
-    token = line
+def onStartup():
+    global token
+    global config
+    fileHandle = open("Token.conf")
+    token = fileHandle.readline().rstrip("\n")
+    fileHandle.close()
+    if isfile("Settings.conf"):
+        fileHandle = open("Settings.conf", "r")
+        for line in fileHandle:
+            elements = line.rstrip("\n").split("=")
+            config[elements[0]] = elements[1]
+        fileHandle.close()
+
+def onClose():
+    global config
+    fileHandle = open("Settings.conf", "w")
+    for element in config:
+        fileHandle.write(element[0] + "=" + element[1] + "\n")
+    fileHandle.close()
 
 client = discord.Client()
 
@@ -17,10 +38,6 @@ client = discord.Client()
 def on_ready():
     print("Logged in as:", client.user.name, "with id:", client.user.id)
     print("Hello, humans")
-
-commands = []
-admin_name = ""
-config = {}
 
 @client.event
 @asyncio.coroutine
@@ -47,6 +64,7 @@ def register_function(command, callback):
 
 def kill_callback(message):
     yield from client.send_message(message.channel, "killing client")
+    onClose()
     client.close()
     exit()
 
@@ -109,7 +127,7 @@ def setConfig(message):
         yield from client.send_message(message.channel, "Config updated")
 
 def nicememe_callback(message):
-    yield from client.send_message(message.channel, "http://niceme.me")
+    yield from client.edit_message(message, "http://niceme.me")
 
 def help_callback(message):
     global commands
@@ -132,4 +150,5 @@ register_function(":nice", nicememe_callback)
 register_function(":help", help_callback)
 register_function(":conf", setConfig)
 
+onStartup()
 client.run(token)
