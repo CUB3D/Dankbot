@@ -23,12 +23,20 @@ def onStartup():
             elements = line.rstrip("\n").split("=")
             config[elements[0]] = elements[1]
         fileHandle.close()
+    if isfile("Admin.conf"):
+        fileHandle = open("Admin.conf", "r")
+        global admin_name
+        admin_name = fileHandle.readline().rstrip("\n")
+        fileHandle.close()
 
 def onClose():
     global config
     fileHandle = open("Settings.conf", "w")
-    for element in config:
-        fileHandle.write(element[0] + "=" + element[1] + "\n")
+    for key in config:
+        fileHandle.write(key + "=" + config[key] + "\n")
+    fileHandle.close()
+    fileHandle = open("Admin.conf", "w")
+    fileHandle.write(admin_name)
     fileHandle.close()
 
 client = discord.Client()
@@ -151,4 +159,5 @@ register_function(":help", help_callback)
 register_function(":conf", setConfig)
 
 onStartup()
+print(admin_name)
 client.run(token)
