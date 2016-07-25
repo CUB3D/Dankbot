@@ -41,6 +41,11 @@ def onClose():
 
 client = discord.Client()
 
+def messageFromAdmin(message):
+    global admin_name
+
+    return admin_name == str(message.author)
+
 @client.event
 @asyncio.coroutine
 def on_ready():
@@ -51,7 +56,7 @@ def on_ready():
 @asyncio.coroutine
 def on_message(message):
     print("Got message:", message.content)
-    
+
     global commands
 
     for command in commands:
@@ -71,10 +76,13 @@ def register_function(command, callback):
     commands.append(command)
 
 def kill_callback(message):
-    yield from client.send_message(message.channel, "killing client")
-    onClose()
-    client.close()
-    exit()
+    if messageFromAdmin(message):
+        yield from client.send_message(message.channel, "killing client")
+        onClose()
+        client.close()
+        exit()
+    else:
+        yield from client.send_message(message.channel, "Permission Denied")
 
 @asyncio.coroutine
 def ping_callback(message):
@@ -126,13 +134,12 @@ def setAdmin(message):
         print("Denied")
 
 def setConfig(message):
-    global admin_name
-    userName = message.author
-    print(str(admin_name) + ", " + str(userName))
-    if(str(admin_name) == str(userName)):
+    if messageFromAdmin(message):
         split = message.content.split("=")
         config[split[1]] = split[2]
         yield from client.send_message(message.channel, "Config updated")
+    else:
+        yield from client.send_message(message.channel, "Permission Denied")
 
 def nicememe_callback(message):
     yield from client.edit_message(message, "http://niceme.me")
@@ -159,5 +166,4 @@ register_function(":help", help_callback)
 register_function(":conf", setConfig)
 
 onStartup()
-print(admin_name)
 client.run(token)
